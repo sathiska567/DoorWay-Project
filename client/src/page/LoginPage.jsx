@@ -1,30 +1,26 @@
 import React, { useState } from 'react';
 import {
-  Alert,
-  Box,
   Typography,
-  TextField,
-  IconButton,
-  InputAdornment,
+  Alert,
   useMediaQuery,
-  useTheme
+  useTheme,
+  CircularProgress,
 } from '@mui/material';
-import { Mail, Lock, Visibility, VisibilityOff, MailOutline, LockOutlined } from '@mui/icons-material';
+import { MailOutline, LockOutlined } from '@mui/icons-material';
 import CustomButton from './../components/CustomButton';
 import img from '../assets/loginImage.jpg';
 import styles from '../styles/LoginForm.module.css';
 import TextInput from '../components/TextInput';
-import axios from 'axios';
 import { login } from '../api/apiService';
 import AlertComponent from '../components/AlertComponent';
 
 const LoginPage = () => {
-  const [alertMessage, setAlertMessage] = useState(null);
-  const [showAlert, setShowAlert] = useState(false);
+  const [showAlert, setShowAlert] = useState({ type: '', message: '' });
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
 
   const theme = useTheme();
@@ -33,41 +29,34 @@ const LoginPage = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      console.log('Form submitted:', formData);
       const response = await login(formData.email, formData.password);
-      setShowAlert(true);  
-      console.log(response.data);
+
+      setShowAlert({ type: 'success', message: 'User login successful!' });
+      console.log('Response:', response.data);
     } catch (error) {
-      setShowAlert(true);
-      // alert('This is an info alert — check it out!');
+      setShowAlert({ type: 'error', message: 'Login failed. Please try again.' });
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-  
 
   return (
     <div className={styles.loginContainer}>
       <div className={styles.loginCard}>
         <div className={styles.loginFormSection}>
           <div className={styles.welcomeText}>
-
-          {showAlert ? (
-            <AlertComponent 
-            message = {"User Login Successful"}
-            type = {"success"}
-            />
-          ) : (
-            <AlertComponent 
-              message = {"User Login Have An issue"}
-              type = {"error"}
-              />
-          )}
+            {showAlert.message && (
+              <AlertComponent message={showAlert.message} type={showAlert.type} />
+            )}
 
             <Typography className={styles.formTitle} variant="h4">
               Welcome Back!
@@ -80,15 +69,16 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
               <TextInput
-                label={"Email"}
+                label="Email"
                 name="email"
-                type={"email"}
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
                 fullWidth
                 required
                 icon={MailOutline}
-                positionStart={"start"}
+                positionStart="start"
+                aria-label="Email"
               />
             </div>
 
@@ -96,12 +86,13 @@ const LoginPage = () => {
               <TextInput
                 label="Password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 icon={LockOutlined}
                 value={formData.password}
                 onChange={handleChange}
                 showPassword={showPassword}
                 setShowPassword={setShowPassword}
+                aria-label="Password"
               />
             </div>
 
@@ -110,22 +101,22 @@ const LoginPage = () => {
             </div>
 
             <div className={styles.formActions}>
-              <CustomButton
-                button="Sign In"
-                onClick={handleSubmit}
-                fullWidth
-              />
+              <CustomButton button="Sign In" type="submit" fullWidth disabled={isLoading}>
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              </CustomButton>
             </div>
 
             <div className={styles.signupPrompt}>
-              Don't have an account?
-              <a href="#" className={styles.signupLink}>Sign up</a>
+              Don't have an account?{' '}
+              <a href="#" className={styles.signupLink}>
+                Sign up
+              </a>
             </div>
           </form>
         </div>
 
         <div className={styles.loginImageSection}>
-          <img src={img} alt="Login" />
+          <img src={img} alt="Login illustration" />
         </div>
       </div>
     </div>
