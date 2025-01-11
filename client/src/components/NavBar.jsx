@@ -24,6 +24,7 @@ function NavBar() {
 
   const handleLogout = () => {
     removeToken();
+    localStorage.clear();
     navigate("/login")
   };
 
@@ -38,7 +39,7 @@ function NavBar() {
             href="#"
             sx={{
               mr: 2,
-              display: { xs: 'none', md: 'flex' },
+              display: {md: 'flex' },
               fontFamily: 'monospace',
               fontWeight: 700,
               letterSpacing: '.05rem',

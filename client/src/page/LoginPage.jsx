@@ -65,6 +65,8 @@ const LoginPage = () => {
       const userName = response.data.user.name;
       const email = response.data.user.email;
 
+      localStorage.setItem("token", jwtToken);
+
       setToken(jwtToken);
       setEmail(email)
       setUsername(userName)

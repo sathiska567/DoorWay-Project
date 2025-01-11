@@ -13,7 +13,7 @@ useEffect(() => {
     setAuthToken(token); 
 }, [token]);
 
-  if (token != null) {
+  if (token != null || localStorage.getItem("token") != null) {
     return children;
   } else {
     return <Navigate to="/login" />;
