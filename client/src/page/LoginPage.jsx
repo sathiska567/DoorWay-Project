@@ -1,44 +1,85 @@
 import React, { useState } from 'react';
-import { 
-  Alert, 
-  Box, 
-  Typography, 
-  TextField,
-  IconButton,
-  InputAdornment,
+import {
+  Typography,
+  Alert,
   useMediaQuery,
-  useTheme
+  useTheme,
+  CircularProgress,
 } from '@mui/material';
-import { Mail, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
+import { MailOutline, LockOutlined } from '@mui/icons-material';
 import CustomButton from './../components/CustomButton';
 import img from '../assets/loginImage.jpg';
-import styles from '../styles/LoginForm.module.css'; 
+import styles from '../styles/LoginForm.module.css';
+import TextInput from '../components/TextInput';
+import { login } from '../api/apiService';
+import AlertComponent from '../components/AlertComponent';
+import useAuthStore from '../hooks/authStore';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-  const [alertMessage, setAlertMessage] = useState(null);
+  const [showAlert, setShowAlert] = useState({ type: '', message: '' });
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
-  
+
+  const { setToken , setUsername ,setEmail } = useAuthStore();
+
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isValidEmail(formData.email)) {
+      setShowAlert({ type: 'error', message: 'Please enter a valid email address.' });
+      return;
+    }
+    if (formData.password.trim() === '') {
+      setShowAlert({ type: 'error', message: 'Password cannot be empty.' });
+      return;
+    }
+    setIsLoading(true);
+
     try {
-      console.log('Form submitted:', formData);
-      setAlertMessage(null);
+ 
+      const response = await login(formData.email, formData.password);
+
+      setShowAlert({ type: 'success', message: 'User login successful!' });
+      
+      const jwtToken = response.data.token;
+      const userName = response.data.user.name;
+      const email = response.data.user.email;
+
+      setToken(jwtToken);
+      setEmail(email)
+      setUsername(userName)
+
+      console.log('Response:', response.data );
+
+      navigate('/')
+
     } catch (error) {
-      setAlertMessage('This is an info alert — check it out!');
+      
+      setShowAlert({ type: 'error', message: 'Login failed. Please try again.' });
+      console.error('Error:', error);
+
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -47,6 +88,10 @@ const LoginPage = () => {
       <div className={styles.loginCard}>
         <div className={styles.loginFormSection}>
           <div className={styles.welcomeText}>
+            {showAlert.message && (
+              <AlertComponent message={showAlert.message} type={showAlert.type} />
+            )}
+
             <Typography className={styles.formTitle} variant="h4">
               Welcome Back!
             </Typography>
@@ -57,48 +102,31 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
-              <TextField
-                fullWidth
+              <TextInput
                 label="Email"
                 name="email"
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Mail size={20} />
-                    </InputAdornment>
-                  ),
-                }}
+                fullWidth
+                required
+                icon={MailOutline}
+                positionStart="start"
+                aria-label="Email"
               />
             </div>
 
             <div className={styles.formGroup}>
-              <TextField
-                fullWidth
+              <TextInput
                 label="Password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
+                icon={LockOutlined}
                 value={formData.password}
                 onChange={handleChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Lock size={20} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                aria-label="Password"
               />
             </div>
 
@@ -107,22 +135,22 @@ const LoginPage = () => {
             </div>
 
             <div className={styles.formActions}>
-              <CustomButton
-                button="Sign In"
-                onClick={handleSubmit}
-                fullWidth
-              />
+              <CustomButton button="Sign In" type="submit" fullWidth disabled={isLoading}>
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              </CustomButton>
             </div>
 
             <div className={styles.signupPrompt}>
-              Don't have an account?
-              <a href="#" className={styles.signupLink}>Sign up</a>
+              Don't have an account?{' '}
+              <a href="#" className={styles.signupLink}>
+                Sign up
+              </a>
             </div>
           </form>
         </div>
 
         <div className={styles.loginImageSection}>
-          <img src={img} alt="Login" />
+          <img src={img} alt="Login illustration" />
         </div>
       </div>
     </div>

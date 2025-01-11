@@ -1,0 +1,12 @@
+client
+ - npm i
+ - npm run dev
+
+server
+ - npm i
+ - npm run dev
+
+Already Registered User Details
+ - email : sasindu@gmail.com
+ - password : 1234
+ - userName : sathiska
