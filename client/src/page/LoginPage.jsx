@@ -13,6 +13,8 @@ import styles from '../styles/LoginForm.module.css';
 import TextInput from '../components/TextInput';
 import { login } from '../api/apiService';
 import AlertComponent from '../components/AlertComponent';
+import useAuthStore from '../hooks/authStore';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [showAlert, setShowAlert] = useState({ type: '', message: '' });
@@ -23,8 +25,15 @@ const LoginPage = () => {
     password: '',
   });
 
+  const { setToken , setUsername ,setEmail } = useAuthStore();
+
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -35,15 +44,40 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isValidEmail(formData.email)) {
+      setShowAlert({ type: 'error', message: 'Please enter a valid email address.' });
+      return;
+    }
+    if (formData.password.trim() === '') {
+      setShowAlert({ type: 'error', message: 'Password cannot be empty.' });
+      return;
+    }
     setIsLoading(true);
+
     try {
+ 
       const response = await login(formData.email, formData.password);
 
       setShowAlert({ type: 'success', message: 'User login successful!' });
-      console.log('Response:', response.data);
+      
+      const jwtToken = response.data.token;
+      const userName = response.data.user.name;
+      const email = response.data.user.email;
+
+      setToken(jwtToken);
+      setEmail(email)
+      setUsername(userName)
+
+      console.log('Response:', response.data );
+
+      navigate('/')
+
     } catch (error) {
+      
       setShowAlert({ type: 'error', message: 'Login failed. Please try again.' });
       console.error('Error:', error);
+
     } finally {
       setIsLoading(false);
     }

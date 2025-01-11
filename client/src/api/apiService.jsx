@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080/api/v1/auth", // Replace with actual backend URL
+  baseURL: "http://localhost:8080/api/v1/auth",
   headers: {
     "Content-Type": "application/json",
   },
@@ -15,6 +15,7 @@ const request = async (method, endpoint, data = {}, config = {}) => {
       data,
       ...config,
     });
+    
     return response.data;
     
   } catch (error) {
